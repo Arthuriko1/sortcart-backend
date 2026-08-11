@@ -1,0 +1,16 @@
+{
+  "name": "sortcart-backend",
+  "version": "1.0.0",
+  "description": "Secure relay for SortCart: holds AI + LionWheel keys server-side",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
