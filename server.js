@@ -175,5 +175,31 @@ app.get('/api/lionwheel/raw', async (req, res) => {
 });
 function safeJson(t){ try { return JSON.parse(t); } catch { return t.slice(0, 2000); } }
 
+// LOOKUP a task by scanned barcode/code -> returns city + task id
+app.get('/api/lw/lookup/:code', async (req, res) => {
+  if (!LIONWHEEL_KEY) return res.status(500).json({ error: 'no_key' });
+  try {
+    const url = `${LIONWHEEL_BASE}/tasks?key=${LIONWHEEL_KEY}&code=${encodeURIComponent(req.params.code)}`;
+    const r = await fetch(url);
+    const data = await r.json();
+    const t = (data.tasks || [])[0];
+    if (!t) return res.json({ found: false });
+    res.json({ found: true, id: t.id, code: t.code, city: t.destination_city,
+      recipient: t.destination_recipient_name, order: t.wp_order_id, status: t.status });
+  } catch (e) { res.status(500).json({ error: String(e.message||e) }); }
+});
+
+// UPDATE a task status (received / loaded). Tries the documented update path.
+app.post('/api/lw/status/:id', async (req, res) => {
+  if (!LIONWHEEL_KEY) return res.status(500).json({ error: 'no_key' });
+  const status = (req.body && req.body.status) || '';
+  try {
+    const url = `${LIONWHEEL_BASE}/tasks/${encodeURIComponent(req.params.id)}/update?key=${LIONWHEEL_KEY}`;
+    const r = await fetch(url, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status }) });
+    const text = await r.text();
+    res.status(200).json({ sent_status: status, lw_status: r.status, lw_body: safeJson(text) });
+  } catch (e) { res.status(500).json({ error: String(e.message||e) }); }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log('SortCart backend listening on ' + PORT));
