@@ -179,11 +179,18 @@ function safeJson(t){ try { return JSON.parse(t); } catch { return t.slice(0, 20
 app.get('/api/lw/lookup/:code', async (req, res) => {
   if (!LIONWHEEL_KEY) return res.status(500).json({ error: 'no_key' });
   try {
-    const url = `${LIONWHEEL_BASE}/tasks?key=${LIONWHEEL_KEY}&code=${encodeURIComponent(req.params.code)}`;
+    const wanted = String(req.params.code).trim();
+    const url = `${LIONWHEEL_BASE}/tasks?key=${LIONWHEEL_KEY}&code=${encodeURIComponent(wanted)}`;
     const r = await fetch(url);
     const data = await r.json();
-    const t = (data.tasks || [])[0];
-    if (!t) return res.json({ found: false });
+    const list = data.tasks || [];
+    // EXACT match on code, id, or wp_order_id — never just the first item
+    const t = list.find(x =>
+      String(x.code) === wanted ||
+      String(x.id) === wanted ||
+      String(x.wp_order_id || '') === wanted
+    );
+    if (!t) return res.json({ found: false, searched: wanted, count: list.length });
     res.json({ found: true, id: t.id, code: t.code, city: t.destination_city,
       recipient: t.destination_recipient_name, order: t.wp_order_id, status: t.status });
   } catch (e) { res.status(500).json({ error: String(e.message||e) }); }
