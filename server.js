@@ -237,6 +237,19 @@ app.post('/api/puck/off/:city', (req,res)=>{
   puckState[c]={lit:false, color:(puckState[c]&&puckState[c].color)||16758304};
   res.json({ok:true});
 });
+// TEST (browser link): GET /api/puck/testlight/REHOVOT  -> lights it
+app.get('/api/puck/testlight/:city', (req,res)=>{
+  const c=(req.params.city||'').toUpperCase();
+  puckState[c]={lit:true, color: CITY_COLORS[c]||16758304};
+  res.json({ok:true, lit:true, city:c});
+});
+// TEST (browser link): GET /api/puck/testoff/REHOVOT -> turns it off
+app.get('/api/puck/testoff/:city', (req,res)=>{
+  const c=(req.params.city||'').toUpperCase();
+  puckState[c]={lit:false, color:(puckState[c]&&puckState[c].color)||16758304};
+  res.json({ok:true, lit:false});
+});
+
 // Puck asks "should I light?":  GET /api/puck/cmd/REHOVOT
 app.get('/api/puck/cmd/:city', (req,res)=>{
   const c=(req.params.city||'').toUpperCase();
