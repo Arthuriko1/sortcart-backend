@@ -220,5 +220,34 @@ app.get('/api/lw/settest/:id/:status', async (req, res) => {
   } catch (e) { res.status(500).json({ error: String(e.message||e) }); }
 });
 
+// ===== PUCK CONTROL (simple in-memory state) =====
+// puckState[CITY] = { lit: true/false, color: number }
+const puckState = {};
+const CITY_COLORS = { 'TEL AVIV':16758304,'HAIFA':5020159,'ASHDOD':3140223,'JERUSALEM':12623356,'BEER SHEVA':16738913,'REHOVOT':3458646 };
+
+// App tells a puck to light:  POST /api/puck/light/REHOVOT
+app.post('/api/puck/light/:city', (req,res)=>{
+  const c=(req.params.city||'').toUpperCase();
+  puckState[c]={lit:true, color: CITY_COLORS[c]||16758304};
+  res.json({ok:true, city:c});
+});
+// App turns a puck off:  POST /api/puck/off/:city
+app.post('/api/puck/off/:city', (req,res)=>{
+  const c=(req.params.city||'').toUpperCase();
+  puckState[c]={lit:false, color:(puckState[c]&&puckState[c].color)||16758304};
+  res.json({ok:true});
+});
+// Puck asks "should I light?":  GET /api/puck/cmd/REHOVOT
+app.get('/api/puck/cmd/:city', (req,res)=>{
+  const c=(req.params.city||'').toUpperCase();
+  res.json(puckState[c] || {lit:false, color:16758304});
+});
+// Puck reports box placed:  GET /api/puck/placed/REHOVOT
+app.get('/api/puck/placed/:city', (req,res)=>{
+  const c=(req.params.city||'').toUpperCase();
+  puckState[c]={lit:false, color:(puckState[c]&&puckState[c].color)||16758304};
+  res.json({ok:true});
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log('SortCart backend listening on ' + PORT));
